@@ -7,16 +7,17 @@
 #include <fcntl.h>
 #include <signal.h>
 #include "client.h"
+#include  <sys/shm.h>
 
-#define SHM_LENGTH       32
+#define SHM_LENGTH       100
 
 #define SHM_FLAG         0 // Le shm est initialisée
 #define COMMANDE_FLAG    1 // Le client a entré la commande
 #define RESULT_FLAG      2 // Le client peut récupérer le resultat
 
-#define SHM_NAME     "/mon_shm"  
+#define SHM_NAME     "/mopn_shm"  
 
-#define SHM_SIZE      30
+#define SHM_SIZE      100
 
 #define FUN_SUCCESS   0
 #define FUN_FAILURE   -1
@@ -48,9 +49,13 @@ int main(void) {
 
 int send_command_to_thread(char *shm_name, char *command, size_t shm_size) {
   int shm_fd;
-  if ((shm_fd = shm_open(shm_name, O_RDWR | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
+  if ((shm_fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
     perror("send_command_to_thread: Impossible d'ouvrir le shm");
     return FUN_FAILURE;
+  }
+    if (shm_unlink(SHM_NAME) == -1) {
+    perror("shm_unlink");
+    exit(EXIT_FAILURE);
   }
   if (ftruncate(shm_fd, (long int) shm_size) == -1) {
     perror("send_command_to_thread: Impossible de projéter le shm");
@@ -73,6 +78,40 @@ int send_command_to_thread(char *shm_name, char *command, size_t shm_size) {
   *flag = COMMANDE_FLAG;
   if (close(shm_fd) == -1) {
     perror("send_command_to_thread: Impossible de fermer le shm");
+    return FUN_FAILURE;
+  }
+  return FUN_SUCCESS;
+}
+
+int receive_result_from_thread(char *shm_name, size_t shm_size) {
+  int shm_fd;
+  if ((shm_fd = shm_open(shm_name, O_RDWR | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
+    perror("receive_result_from_thread: Impossible d'ouvrir le shm");
+    return FUN_FAILURE;
+  }
+  if (ftruncate(shm_fd, (long int) shm_size) == -1) {
+    perror("receive_result_from_thread: Impossible de projéter le shm");
+    return FUN_FAILURE;
+  }
+  void *ptr
+    = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+  if (ptr == MAP_FAILED) {
+    perror("receive_result_from_thread: Impossible de fixer la taille de shm");
+    return FUN_FAILURE;
+  }
+  volatile int *flag = (int *) ptr;
+  while (*flag != RESULT_FLAG) {
+  }
+  char *result = (char *) ptr + sizeof(int);
+  size_t i = 0;
+  while (result[i] != '\0') {
+    putchar(result[i]);
+    ++i;
+  }
+  *flag = SHM_FLAG;
+  result[0] = '\0';
+  if (close(shm_fd) == -1) {
+    perror("receive_result_from_thread: Impossible de fermer le shm");
     return FUN_FAILURE;
   }
   return FUN_SUCCESS;
