@@ -10,6 +10,8 @@
 
 #define SHM_NAME     "/mopn_shm"  
 
+#define SHM_FLAG         0
+
 #define SHM_LENGTH      100
 
 #define FUN_SUCCESS   0
@@ -38,11 +40,15 @@ int main(void) {
     perror("receive_result_from_thread: Impossible de fixer la taille de shm");
     return FUN_FAILURE;
   }
+  volatile int *flag = (int *) ptr;
+  while (*flag != 2) {
+  }
+  char *result = (char *) ptr + sizeof(int);
+   printf("demon = %s%s\n",result,(char *)ptr);
+    *flag = SHM_FLAG;
    if (close(shm_fd) == -1) {
     perror("send_command_to_thread: Impossible de fermer le shm");
     return FUN_FAILURE;
   }
-  char *result = (char *) ptr + sizeof(int);
-   printf("demon = %s%s\n",result,(char *)ptr);
     return 0;
 }
