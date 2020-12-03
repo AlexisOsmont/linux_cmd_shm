@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <mqueue.h>
+
 
 
 
@@ -8,7 +10,7 @@
 
 //  send_command_to_thread: envoie les commandes (requêtes du client) au thread
 // associé au client. Renvoie -1 en cas d'erreur et 0 en cas de succès.
-extern int send_command_to_thread(char *shm_name, char *command,
+extern int send_command_to_thread(int shm_fd,  mqd_t mqd,char *command,
     size_t shm_size);
 
     //  receive_result_from_thread: écrit les résultats de la commande exécutée par

@@ -7,10 +7,11 @@
 #include <fcntl.h>
 #include <signal.h>
 #include  <sys/shm.h>
+#include <mqueue.h>
 
-#define SHM_NAME     "/mopn_shm"  
 
-#define SHM_FLAG         0
+#define SHM_NAME     "/mon_shm"  
+#define QUEUE_NAME   "/ma_file17"
 
 #define SHM_LENGTH      100
 
@@ -21,13 +22,17 @@
 
 
 int main(void) {
- int shm_fd = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-  if (shm_fd == -1) {
-    perror("shm_open");
+  struct mq_attr attr;
+  attr.mq_maxmsg = 10;
+  attr.mq_msgsize = 128;
+  mqd_t mqd = mq_open(QUEUE_NAME , O_RDWR | O_CREAT | O_EXCL ,S_IRUSR | S_IWUSR, &attr);
+  if (mqd == (mqd_t) -1) {
+    perror("mq_open demon.c");
     exit(EXIT_FAILURE);
   }
-  if (shm_unlink(SHM_NAME) == -1) {
-    perror("shm_unlink");
+ int shm_fd = shm_open(SHM_NAME, O_RDWR |O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  if (shm_fd == -1) {
+    perror("shm_open");
     exit(EXIT_FAILURE);
   }
   if (ftruncate(shm_fd, (long int) SHM_LENGTH) == -1) {
@@ -40,15 +45,32 @@ int main(void) {
     perror("receive_result_from_thread: Impossible de fixer la taille de shm");
     return FUN_FAILURE;
   }
-  volatile int *flag = (int *) ptr;
-  while (*flag != 2) {
-  }
+  int *i = (int *)(ptr);
   char *result = (char *) ptr + sizeof(int);
-   printf("demon = %s%s\n",result,(char *)ptr);
-    *flag = SHM_FLAG;
-   if (close(shm_fd) == -1) {
+  *i = 0;
+  char msg[SHM_LENGTH];
+  printf("-------------------------\nMessages envoyés par le client :\n");
+  while (strcmp(result,"stop") != 0) {
+        while (*i == 0);
+        printf("%s\n", result);
+		*i = 0;    
+  }
+  printf("-------------------------\nMessages dans la queue :\n");
+  while (strcmp(msg,"stop")) {
+    if (mq_receive(mqd ,msg ,128 , 0) == -1) {
+      perror("mq_send: impossible d'ajouter une commande");
+      return FUN_FAILURE;
+    }
+   printf("%s\n", msg);  
+  }
+  if (close(shm_fd) == -1) {
     perror("send_command_to_thread: Impossible de fermer le shm");
     return FUN_FAILURE;
   }
+  if(mq_close(mqd) == (mqd_t) -1) {
+    perror("mq_close: ");
+    return FUN_FAILURE;
+  }
+  printf("probleme ici : \n");  
     return 0;
 }

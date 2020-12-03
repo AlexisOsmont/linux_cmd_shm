@@ -17,4 +17,3 @@ clean:
 
 client.o: client.c client.h
 demon.o: demon.c demon.h
-
