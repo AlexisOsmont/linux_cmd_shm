@@ -1,0 +1,7 @@
+pour executer/tester :
+
+1-executer le demon dans un terminal : ./demon
+2-executer le client dans un autre terminal : ./client
+3-entrer une requete dans le terminal de client.
+
+exemple : hello

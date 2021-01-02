@@ -1,1 +1,0 @@
-# linux_cmd_shm
