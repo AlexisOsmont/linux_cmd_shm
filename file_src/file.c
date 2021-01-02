@@ -111,31 +111,29 @@ char *defiler(file* file_p) {
   }
 
   // Récupération de la longueur du Pid
-  char lengthOfPid[1];
+  char *lengthOfPid = malloc(1); // Car 1 octet pour la taille du pid
   if (strncpy(lengthOfPid, &file_p->buffer[file_p->queue], 1) == NULL) {
     fprintf(stderr, "defiler strncpy pid problem");
     exit(EXIT_FAILURE);
   }
   int lengthPid = atoi(lengthOfPid);
+  free(lengthOfPid);
+
 
   // Récupération longueur de la requête
+  //printf("Affichage du caratère : %c\n", file_p->buffer[file_p->queue]);
+  //printf("Affichage de l'entier : %d\n", file_p->buffer[file_p->queue]);
   int lengthRequest = atoi(&file_p->buffer[file_p->queue] + lengthPid + 1); //+1 car stockage longueur pid
-  char lengthOfRequest[3];
-  int j = 0;
-  for (int i = file_p->queue + lengthPid + 1; i < file_p->queue + lengthPid + 1 + 3; i++) {
-  int a = file_p->buffer[file_p->queue] + lengthPid + 1;
-    char c = (char)a;
-    
-    if (isdigit(c)) {
-      j++;
-    }
+  //printf("lengthRequest : %d\n", lengthRequest); 
+  int taille_lengthRequest = 0;
+  if (lengthRequest <= 9) {
+    taille_lengthRequest = 1;
+  } else if (lengthRequest > 9 && lengthRequest <= 99) {
+    taille_lengthRequest = 2;
+  } else {
+    taille_lengthRequest = 3;
   }
-  snprintf(lengthOfRequest, (size_t)j, "%s", &file_p->buffer[file_p->queue] + lengthPid + 1);
-  
-  /*if (strncpy(lengthOfRequest, &file_p->buffer[file_p->queue], i) == NULL) {
-    fprintf(stderr, "defiler strncpy pid problem");
-    exit(EXIT_FAILURE);
-  }*/
+ 
   //printf("Chaine de caractère lengthOfRequest : %s\n", lengthOfRequest);
   //printf("Taille de lengthOfRequest : %ld\n", strlen(lengthOfRequest));
   //printf("lengthOfRequest : %d\n", atoi(lengthOfRequest)); 
@@ -144,14 +142,19 @@ char *defiler(file* file_p) {
   //Récupération de la requête
   //printf("Affichage Requête :\n"); 
   char *request  = malloc((size_t)lengthRequest);
-  if (strncpy(request, &file_p->buffer[file_p->queue], (size_t)lengthRequest + (size_t)lengthPid + strlen(lengthOfRequest) +1) == NULL) { //+2 car stockage longueur pid et requete
+  printf("Affichage longueur de la requete : %d\n", lengthRequest);
+  printf("Longueur du pid : %d\n", lengthPid);
+  printf("Taille du nbr représentant la taille de la requete : %d\n", taille_lengthRequest);
+  if (strncpy(request, &file_p->buffer[file_p->queue], (size_t)lengthRequest 
+  + (size_t)lengthPid + /*strlen(lengthOfRequest) +*/ 1 + (size_t)taille_lengthRequest) == NULL) { //+2 car stockage longueur pid et requete
     fprintf(stderr, "problem pour la récupération de la requête");
     exit(EXIT_FAILURE);
   }
   printf("requete dans defiler file_p->buff : %s\n", &file_p->buffer[file_p->queue]);
 
   // Déplacement du pointeur de queue de la file de la taille de la requête
-  int decalage = lengthPid + lengthRequest + 2;
+  int decalage = lengthPid + lengthRequest + 1 + taille_lengthRequest;
+  printf("Le décalage : %d\n", decalage);
   file_p->queue = (file_p->queue + decalage) % N;  
   
   //printf("\nJ'ai fini d'écrire sur la sortie standard\n");

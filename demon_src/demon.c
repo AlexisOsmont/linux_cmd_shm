@@ -17,6 +17,8 @@
 #define FINISH "exit"
 
 
+int get_pid(char *commande);
+
 int main(void) {
   int shm_fd = shm_open(NOM_SHM, O_RDWR |O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (shm_fd == -1) {
@@ -33,12 +35,21 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
   file* file_p = create_shm_file(shm_ptr);
-
+  threads *th = thread_ini();
+  int pid;
+  char *req;
+  int thc_return;
   while (1) {
-    char *req = defiler(file_p);
+    req = defiler(file_p);
     printf("requete defilée dans demon.c : %s\n", req);
-    if (thread_create(req) == -1) {
+    thc_return = thread_create(th, req);
+    if (thc_return == -1) {
        return EXIT_FAILURE;
+    } else if (thc_return == -2) {
+      enfiler("0",file_p);
+      while ((pid = get_pid(defiler(file_p))) != 0) {
+          kill((pid_t)pid, SIGUSR1);
+      }
     }
   }
   if (shm_unlink(NOM_SHM) == -1) {
@@ -46,4 +57,19 @@ int main(void) {
 		exit(EXIT_FAILURE);
   }
   return EXIT_SUCCESS;
+}
+
+int get_pid(char *commande) {
+  char cmd[strlen(commande)];
+    char *com = (char*)commande;
+    size_t l = (size_t)com[0];
+    char *pid = malloc(l);
+    strcpy(cmd, (char *)commande);
+    int i;
+    printf("split func/cmd : %s \nsplit func/pid :", cmd);
+    for (i = 1; i <= cmd[0] - '0'; i++) {
+            pid[i - 1] = cmd[i];
+            printf("%c", pid[i - 1]);
+    }
+  return atoi(pid);
 }

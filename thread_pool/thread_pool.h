@@ -26,17 +26,20 @@ typedef struct thread_one
   volatile bool end;
 } thread_one;
 
-struct threads
+typedef struct threads
 {
   thread_one **array;
   size_t count;
   size_t max_thread;
-};
+}threads;
 
+threads *th;
+
+threads *thread_ini();
 /**
  * Crée un thread en lui envoyant une commande
  */
-int thread_create(char *commande);
+int thread_create(threads *th, char *commande);
 
 void *split_func(void *commande);
 

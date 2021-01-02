@@ -21,6 +21,7 @@
 
 
 #define BUFFER_SIZE 450
+#define TUBE_SIZE 500
 
 int main(void) {
 	int shm_fd;
@@ -46,8 +47,9 @@ int main(void) {
 		perror("client: Impossible de créer le tube du client");
 		exit(EXIT_FAILURE);
 	}
+	
 	char shm_buff[BUFFER_SIZE];  // Buffer de SHM pour les commandes entrantes
-	char pipe_buff[100];        // Buffer de pipe de sortie
+	char pipe_buff[TUBE_SIZE];        // Buffer de pipe de sortie
 	char mypid[PID_SIZE];
 	char* request;        // ex. 65367\0
 	snprintf(mypid, PID_SIZE,"%d", pid);
@@ -55,12 +57,11 @@ int main(void) {
 	int pipe_fd = 0;
 	while (fgets(shm_buff, BUFFER_SIZE, stdin) != NULL
 			&& strncmp(shm_buff, FINISH, strlen(FINISH)) != 0) {
-
 		request = malloc(1 + strlen(mypid) + 3 + strlen(shm_buff));
 		shm_buff[strlen(shm_buff)] = '\0';
 		sprintf(request, "%ld%s%ld%s", strlen(mypid), mypid, strlen(shm_buff) - 1, shm_buff);
 		request[strlen(request) - 1] = '\0';
-		printf("enfile : %s\n",shm_ptr);
+		printf("enfile : %s\n",request);
 		enfiler(request, (file*)shm_ptr);
 		
 		// LECTURE DANS LE TUBE CLIENT (RÉPONSE CLIENT)
@@ -69,20 +70,11 @@ int main(void) {
 		printf("tube_name : %s\n",tube_client);
 		pipe_fd = open(tube_client, O_RDONLY);
 		printf("pipe_fd : %d\n",pipe_fd);
-
-		// if (dup2(pipe_fd, STDIN_FILENO) == -1) {
-		// 	perror("dup2");
-		// 	exit(EXIT_FAILURE);
-		// }
-
 		printf("client.c/tube client ouvert en lecture\n");
 		printf("--------  client.c/FORK_THREAD -------------\n");
 		printf("client.c/read tube_client\n");
 
-		//	au bout de 3 open : thread pool fork thread: 
-		// Impossible d'ouvrir le tube du client: No such file or directory
-		//	pour ls ou tree deuxieme exec : Bad file descriptor
-		if ((read(pipe_fd, pipe_buff, 10000)) == -1) {
+		if ((read(pipe_fd, pipe_buff, TUBE_SIZE)) == -1) {
 			perror("client : read");
 			exit(EXIT_FAILURE);
 		}
@@ -95,7 +87,6 @@ int main(void) {
 		}
 		free(request);
 	}
-
 	if (unlink(tube_client) == -1) {
 		perror("unlink");
 		exit(EXIT_FAILURE);
