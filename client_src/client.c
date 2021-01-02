@@ -23,16 +23,14 @@
 #define BUFFER_SIZE 450
 #define TUBE_SIZE 500
 
+void dispose(char *tube);
+
 int main(void) {
 	int shm_fd;
 	if ((shm_fd = shm_open(NOM_SHM, O_RDWR, S_IRUSR | S_IWUSR)) == -1) {
 		perror("client : Impossible d'ouvrir le shm");
 		exit(FUN_FAILURE);
   	}
-	  if (shm_unlink(NOM_SHM) == -1) {
-		perror("shm_unlink");
-		exit(EXIT_FAILURE);
-  }
 	char *shm_ptr = mmap(NULL, TAILLE_SHM, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (shm_ptr == MAP_FAILED) {
 		perror("sem_open");
@@ -56,13 +54,16 @@ int main(void) {
 	printf("pid = %s\n", mypid);
 	int pipe_fd = 0;
 	while (fgets(shm_buff, BUFFER_SIZE, stdin) != NULL
-			&& strncmp(shm_buff, FINISH, strlen(FINISH)) != 0) {
-		request = malloc(1 + strlen(mypid) + 3 + strlen(shm_buff));
+			&& strncmp(shm_buff, FINISH, strlen(FINISH)) != 0 ) {
+		request = malloc(1 + strlen(mypid) + 3 + strlen(shm_buff) * sizeof(char));
 		shm_buff[strlen(shm_buff)] = '\0';
 		sprintf(request, "%ld%s%ld%s", strlen(mypid), mypid, strlen(shm_buff) - 1, shm_buff);
 		request[strlen(request) - 1] = '\0';
 		printf("enfile : %s\n",request);
 		enfiler(request, (file*)shm_ptr);
+		if (strstr(shm_buff, "close_demon") != NULL) {
+			break;
+		}
 		
 		// LECTURE DANS LE TUBE CLIENT (RÉPONSE CLIENT)
 		
@@ -76,6 +77,7 @@ int main(void) {
 
 		if ((read(pipe_fd, pipe_buff, TUBE_SIZE)) == -1) {
 			perror("client : read");
+			dispose(tube_client);
 			exit(EXIT_FAILURE);
 		}
 		printf("\n");
@@ -83,11 +85,20 @@ int main(void) {
 		memset(pipe_buff,0,strlen(pipe_buff));
 		if (close(pipe_fd) == -1) {
 			perror("client : closeTubeClient");
+			dispose(tube_client);
 			exit(EXIT_FAILURE);
 		}
 		free(request);
 	}
 	if (unlink(tube_client) == -1) {
+		perror("unlink");
+		exit(EXIT_FAILURE);
+	}
+	return EXIT_SUCCESS;
+}
+
+void dispose(char *tube) {
+	if (unlink(tube) == -1) {
 		perror("unlink");
 		exit(EXIT_FAILURE);
 	}

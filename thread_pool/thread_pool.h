@@ -44,3 +44,5 @@ int thread_create(threads *th, char *commande);
 void *split_func(void *commande);
 
 int fork_thread(char *pid, char *cmd, char *args[]);
+
+void dispose_req(char *pid, char *args[]);

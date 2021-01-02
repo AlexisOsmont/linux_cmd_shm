@@ -19,6 +19,8 @@
 
 int get_pid(char *commande);
 
+void dispose(threads *th);
+
 int main(void) {
   int shm_fd = shm_open(NOM_SHM, O_RDWR |O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (shm_fd == -1) {
@@ -32,6 +34,7 @@ int main(void) {
   char *shm_ptr = mmap(NULL, TAILLE_SHM, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
   if (shm_ptr == MAP_FAILED) {
     perror("sem_open");
+    dispose(th);
     exit(EXIT_FAILURE);
   }
   file* file_p = create_shm_file(shm_ptr);
@@ -41,9 +44,13 @@ int main(void) {
   int thc_return;
   while (1) {
     req = defiler(file_p);
+    if (strstr(req,"close_demon") != NULL) {
+      break;
+    }
     printf("requete defilée dans demon.c : %s\n", req);
     thc_return = thread_create(th, req);
     if (thc_return == -1) {
+      dispose(th);
        return EXIT_FAILURE;
     } else if (thc_return == -2) {
       enfiler("0",file_p);
@@ -52,10 +59,7 @@ int main(void) {
       }
     }
   }
-  if (shm_unlink(NOM_SHM) == -1) {
-		perror("shm_unlink");
-		exit(EXIT_FAILURE);
-  }
+  dispose(th);
   return EXIT_SUCCESS;
 }
 
@@ -72,4 +76,12 @@ int get_pid(char *commande) {
             printf("%c", pid[i - 1]);
     }
   return atoi(pid);
+}
+
+void dispose(threads *th) {
+  if (shm_unlink(NOM_SHM) == -1) {
+		perror("shm_unlink");
+		exit(EXIT_FAILURE);
+  }
+  free(th); 
 }
