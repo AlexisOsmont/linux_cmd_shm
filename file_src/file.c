@@ -145,12 +145,13 @@ char *defiler(file* file_p) {
   printf("Affichage longueur de la requete : %d\n", lengthRequest);
   printf("Longueur du pid : %d\n", lengthPid);
   printf("Taille du nbr représentant la taille de la requete : %d\n", taille_lengthRequest);
-  if (strncpy(request, &file_p->buffer[file_p->queue], (size_t)lengthRequest 
-  + (size_t)lengthPid + /*strlen(lengthOfRequest) +*/ 1 + (size_t)taille_lengthRequest) == NULL) { //+2 car stockage longueur pid et requete
+  if (strcpy(request, &file_p->buffer[file_p->queue]/*, (size_t)lengthRequest 
+  + (size_t)lengthPid + strlen(lengthOfRequest) + 1 + (size_t)taille_lengthRequest*/) == NULL) { //+2 car stockage longueur pid et requete
     fprintf(stderr, "problem pour la récupération de la requête");
     exit(EXIT_FAILURE);
   }
   printf("requete dans defiler file_p->buff : %s\n", &file_p->buffer[file_p->queue]);
+  printf("avant request = %s\n", request );
 
   // Déplacement du pointeur de queue de la file de la taille de la requête
   int decalage = lengthPid + lengthRequest + 1 + taille_lengthRequest;
@@ -166,5 +167,6 @@ char *defiler(file* file_p) {
     perror("defiler : sem_wait(mutex)");
     exit(EXIT_FAILURE);
   }
+  printf("request = %s\n", request );
   return request;
 }

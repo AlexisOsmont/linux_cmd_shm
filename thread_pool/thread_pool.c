@@ -47,9 +47,9 @@ void *split_func(void *commande) {
 
 		// commande sans option ni arguments
 		while (cmd[i] != ' ' &&  i < (int)strlen(cmd)) {
-				command[k] = cmd[i];
-				k += 1;
-				i += 1;
+			command[k] = cmd[i];
+			k += 1;
+			i += 1;
 		}
 		printf("\nsplit func/cmd = %s\n",command);
 
