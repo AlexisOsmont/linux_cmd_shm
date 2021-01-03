@@ -9,8 +9,9 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <ctype.h>
+#include <file.h>
 
-#include "../file_src/file.h"
+//#include "../file_src/file.h"
 #include "../thread_pool/thread_pool.h"
 
 #define BUFFER_SIZE 20
