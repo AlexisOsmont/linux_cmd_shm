@@ -7,7 +7,9 @@
 #include <fcntl.h>
 #include <signal.h>
 #include  <sys/shm.h>
-#include "../file_src/file.h"
+#include <file.h>
+
+//#include "../file_src/file.h"
 
 #define FUN_SUCCESS 0
 #define FUN_FAILURE -1
