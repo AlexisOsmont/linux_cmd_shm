@@ -7,12 +7,9 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <sys/mman.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <string.h>
-#include <ctype.h>
 
 // DÉFINITION DE LA STRUCTURE DE LA SHM
 typedef struct file {
@@ -31,8 +28,6 @@ typedef struct file {
 
 //TAILLE DE LA SHM
 #define TAILLE_SHM (sizeof(file) + N)
-
-// L'en-tête du segment de mémoire partagée
 
 /**
  * Crée une shm avec une structure de file

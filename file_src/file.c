@@ -1,33 +1,42 @@
 #include "file.h"
 
-//int main(void) {
-  //int shm_fd = shm_open(NOM_SHM, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-  //if (shm_fd == -1) {
-    //perror("shm_open");
-    //exit(EXIT_SUCCESS);
-  //}
+//  main de test :
 
-  //if (shm_unlink(NOM_SHM) == -1) {
-    //perror("shm_unlink");
-    //exit(EXIT_FAILURE);
-  //}
+/*int main(void) {
+  int shm_fd = shm_open(NOM_SHM, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  if (shm_fd == -1) {
+    perror("shm_open");
+    exit(EXIT_SUCCESS);
+  }
 
-  //if (ftruncate(shm_fd, TAILLE_SHM) == -1) {
-    //perror("ftruncate");
-    //exit(EXIT_FAILURE);
-  //}
-  //create_shm_file(shm_fd);
-  //char s_stdin[100];
-  //fgets(s_stdin, 100, stdin);
-  //printf("s_stdin : %s\n", s_stdin);
-  //printf("Affichage de la longueur de strlen(stdin) : %ld\n", strlen(s_stdin));
-  //char *req;
-  //enfiler(s_stdin);
-  //req = defiler();
-  //printf("Requete : %s\n", req);
-  //destroy_semaphore();
-  //return EXIT_SUCCESS;
-//}
+  if (shm_unlink(NOM_SHM) == -1) {
+    perror("shm_unlink");
+    exit(EXIT_FAILURE);
+  }
+
+  if (ftruncate(shm_fd, TAILLE_SHM) == -1) {
+    perror("ftruncate");
+    exit(EXIT_FAILURE);
+  }
+  
+  char *shm_ptr = mmap(NULL, TAILLE_SHM, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+  if (shm_ptr == MAP_FAILED) {
+    perror("sem_open");
+    exit(EXIT_FAILURE);
+  }
+  
+  file *file_p = create_shm_file(shm_ptr);
+  char s_stdin[100];
+  fgets(s_stdin, 100, stdin);
+  printf("s_stdin : %s\n", s_stdin);
+  printf("Affichage de la longueur de strlen(stdin) : %ld\n", strlen(s_stdin));
+  char *req;
+  enfiler(s_stdin, file_p);
+  req = defiler(file_p);
+  printf("Requete : %s\n", req);
+  destroy_semaphore(file_p);
+  return EXIT_SUCCESS;
+}*/
 
 file *create_shm_file(char* shm_ptr) {
   file *file_p;
